@@ -3,8 +3,8 @@ import { createHmac } from "crypto";
 export default async function handler(req, res) {
   const { keyword, limit = 10 } = req.query;
 
-  const accessKey = process.env.COUPANG_ACCESS_KEY;
-  const secretKey = process.env.COUPANG_SECRET_KEY;
+  const accessKey = process.env.Coupang_ACCESS_KEY;
+  const secretKey = process.env.Coupang_SECRET_KEY;
 
   if (!accessKey || !secretKey) {
     return res.status(500).json({ error: "Missing API keys" });
@@ -14,8 +14,8 @@ export default async function handler(req, res) {
   const path = `/v2/providers/affiliate_open_api/apis/openapi/products/search?keyword=${encodeURIComponent(keyword)}&limit=${limit}`;
   const datetime = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
-  // Message = {method}\n{path}\n{datetime}\n
-  const message = `${method}\n${path}\n${datetime}\n`;
+  // ✅ Message: datetime + method + path (쿼리까지 포함)
+  const message = `${datetime}\n${method}\n${path}\n`;
 
   const signature = createHmac("sha256", secretKey)
     .update(message)
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   const authorization = `CEA algorithm=HmacSHA256, access-key=${accessKey}, signed-date=${datetime}, signature=${signature}`;
 
   try {
-    const response = await fetch("https://api-gateway.coupang.com" + path, {
+    const response = await fetch(`https://api-gateway.coupang.com${path}`, {
       method,
       headers: {
         Authorization: authorization,
